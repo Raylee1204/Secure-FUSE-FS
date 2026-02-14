@@ -1,38 +1,38 @@
-# Secure-FUSE-FS: Encrypted In-Memory Filesystem
+# Secure-FUSE-FS: 加密型記憶體檔案系統 (Encrypted In-Memory Filesystem)
 
-**Secure-FUSE-FS** is a lightweight, user-space filesystem implemented in C using the **FUSE (Filesystem in Userspace)** interface. It functions primarily as an in-memory filesystem but integrates **AES-256-CBC encryption** to ensure data confidentiality.
+**Secure-FUSE-FS** 是一個基於 C 語言與 **FUSE (Filesystem in Userspace)** 介面實作的輕量級使用者空間檔案系統。本專案主要在記憶體中運作 (In-Memory)，並整合了 **AES-256-CBC 加密演算法** 來確保資料的機密性。
 
-This project demonstrates the interception of Linux system calls (VFS layer) to implement transparent encryption and decryption mechanisms, a critical concept in secure storage systems and firmware security.
+此專案展示了如何攔截 Linux 系統呼叫 (VFS 層) 以實作透明的加解密機制 (Transparent Encryption)，這是安全儲存系統與韌體安全領域中的關鍵技術。
 
-## 🚀 Key Features
+## 🚀 核心功能 (Key Features)
 
-* **Custom FUSE Implementation**: Handles standard filesystem operations including `mkdir`, `rmdir`, `mknod`, `write`, `read`, `open`, and `getattr`.
-* **Transparent Encryption**:
-    * Integrates **OpenSSL (EVP API)** for cryptographic operations.
-    * Uses **AES-256-CBC** algorithm.
-    * **Per-File Security**: Generates a unique 256-bit Key and 128-bit IV for every new file.
-* **In-Memory Architecture**: Simulates inodes and data blocks using dynamic arrays in C, providing low-latency operations.
-* **Shadow Storage verification**: While the mount point exposes cleartext data to authorized users, the encrypted binary blobs are verified by writing to a shadow directory (`/usr/src/test_tmp`) to prove physical data security.
+* **自定義 FUSE 實作**：完整支援標準檔案系統操作，包括 `mkdir` (建立目錄)、`rmdir` (移除目錄)、`mknod` (建立節點)、`write` (寫入)、`read` (讀取)、`open` (開啟) 以及 `getattr` (獲取屬性)。
+* **透明加密機制 (Transparent Encryption)**：
+    * 整合 **OpenSSL (EVP API)** 進行密碼學運算。
+    * 採用高強度的 **AES-256-CBC** 演算法。
+    * **檔案級安全 (Per-File Security)**：系統會為每一個新建立的檔案生成獨立的 256-bit 金鑰 (Key) 與 128-bit 初始向量 (IV)。
+* **記憶體內架構 (In-Memory Architecture)**：使用 C 語言動態陣列模擬 inode 與資料區塊 (Data Blocks)，提供低延遲的存取效能。
+* **映像儲存驗證 (Shadow Storage Verification)**：雖然掛載點對授權使用者顯示明文，但系統會同步將加密後的二進位資料 (Binary Blob) 寫入影子目錄 (`/usr/src/test_tmp`)，以驗證實體資料的安全性。
 
-## 🛠️ System Architecture
+## 🛠️ 系統架構 (System Architecture)
 
-The filesystem operates by intercepting VFS calls and mapping them to internal memory structures.
+本檔案系統透過攔截 VFS 呼叫並將其映射到內部的記憶體結構來運作：
 
-1.  **Write Operation (`do_write`)**:
-    * User writes data -> FUSE intercepts call.
-    * Data is encrypted using the file's unique AES Key/IV.
-    * Encrypted blob is stored in the memory buffer and flushed to shadow storage for persistence verification.
-2.  **Read Operation (`do_read`)**:
-    * User requests read -> FUSE intercepts call.
-    * System retrieves encrypted blob from memory.
-    * Data is decrypted on-the-fly and returned to the user buffer.
+1.  **寫入操作 (`do_write`)**：
+    * 使用者寫入資料 -> FUSE 攔截請求。
+    * 系統使用該檔案專屬的 AES Key/IV 進行加密。
+    * 加密後的資料被存入記憶體緩衝區，並同步寫入影子儲存區以進行持久化驗證。
+2.  **讀取操作 (`do_read`)**：
+    * 使用者請求讀取 -> FUSE 攔截請求。
+    * 系統從記憶體中取出加密資料。
+    * 資料進行即時解密 (On-the-fly Decryption) 並回傳至使用者緩衝區。
 
-## 💻 Prerequisites
+## 💻 環境需求 (Prerequisites)
 
-* **OS**: Linux (Ubuntu 20.04/22.04 recommended)
-* **Libraries**:
-    * `libfuse-dev` (FUSE development headers)
-    * `libssl-dev` (OpenSSL development headers)
+* **作業系統**: Linux (建議使用 Ubuntu 20.04/22.04)
+* **必要函式庫**:
+    * `libfuse-dev` (FUSE 開發標頭檔)
+    * `libssl-dev` (OpenSSL 開發標頭檔)
     * `gcc`, `make`
 
 ```bash
